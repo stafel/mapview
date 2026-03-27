@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: rpgmap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:latest
+        name: nginx
+        ports: 
+        - containerPort: 80
+          name: webport
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: htmlstatic
+          readOnly: true
+      volumes:
+      - name: htmlstatic
+        persistentVolumeClaim:
+          claimName: nginx-static-pvc
+          readOnly: true

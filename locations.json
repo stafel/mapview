@@ -1,0 +1,66 @@
+[
+    {
+        "id": 1,
+        "x": 200,
+        "y": 300,
+        "title": "Central Park",
+        "description": "A large public park in Manhattan, New York City.",
+        "type": "Park"
+    },
+    {
+        "id": 2,
+        "x": 350,
+        "y": 250,
+        "title": "Museum of Modern Art",
+        "description": "A museum in New York City dedicated to modern and contemporary art.",
+        "type": "Museum"
+    },
+    {
+        "id": 3,
+        "x": 150,
+        "y": 400,
+        "title": "Brooklyn Bridge",
+        "description": "A historic suspension bridge spanning the East River.",
+        "type": "Landmark"
+    },
+    {
+        "id": 4,
+        "x": 1050,
+        "y": 450,
+        "title": "Mystic Forest",
+        "description": "Enchanted forest filled with magical creatures and glowing mushrooms.",
+        "type": "Natural Wonder"
+    },
+    {
+        "id": 5,
+        "x": 1200,
+        "y": 320,
+        "title": "Dragon's Peak",
+        "description": "Treasure-filled mountain peak where dragons once lived.",
+        "type": "Adventure Location"
+    },
+    {
+        "id": 6,
+        "x": 650,
+        "y": 550,
+        "title": "Crystal Caves",
+        "description": "Glowing caves with rare crystals that resonate with magic.",
+        "type": "Natural Wonder"
+    },
+    {
+        "id": 7,
+        "x": 1000,
+        "y": 600,
+        "title": "Floating Islands",
+        "description": "Mysterious islands that drift through the clouds.",
+        "type": "Mystical Location"
+    },
+    {
+        "id": 8,
+        "x": 460,
+        "y": 550,
+        "title": "Ancient Library",
+        "description": "Repository of ancient knowledge and forgotten spells.",
+        "type": "Historical Site"
+    }
+]

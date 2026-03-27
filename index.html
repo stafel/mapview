@@ -1,0 +1,516 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #e6e6e6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px 0;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            color: #ff8a00;
+            text-shadow: 0 0 10px rgba(255, 138, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+            background: #0d0d1a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid #3a3a5a;
+        }
+        
+        #mapCanvas {
+            cursor: grab;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #mapCanvas:active {
+            cursor: grabbing;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(to bottom, #ff8a00, #da1b60);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        #popup {
+            position: absolute;
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid #ff8a00;
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            display: none;
+            transform: translate(-50%, -100%);
+            top: 0;
+            left: 0;
+        }
+        
+        #popup h3 {
+            color: #ff8a00;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        
+        #popup p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        #popup .type {
+            display: inline-block;
+            background: rgba(218, 27, 96, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+        
+        #popup .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ff8a00;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        
+        #popup .close-btn:hover {
+            background: rgba(255, 138, 0, 0.2);
+        }
+        
+        .instructions {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            #popup {
+                width: 250px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interactive Map Explorer</h1>
+            <p class="subtitle">Click on locations to learn more. Drag to pan, scroll to zoom</p>
+            <p id="error-message"></p>
+        </header>
+        
+        <div class="map-container">
+            <canvas id="mapCanvas"></canvas>
+            <div id="popup">
+                <button class="close-btn">&times;</button>
+                <h3 id="popup-title"></h3>
+                <p id="popup-description"></p>
+                <span class="type" id="popup-type"></span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="zoomInBtn">
+                <span>+</span> Zoom In
+            </button>
+            <button class="btn" id="zoomOutBtn">
+                <span>-</span> Zoom Out
+            </button>
+            <button class="btn" id="resetViewBtn">
+                <span>↺</span> Reset View
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <p>Drag the map to pan • Scroll to zoom • Click on pins for details</p>
+        </div>
+        
+        <footer>
+            <p>Game Map Viewer | Interactive Map Explorer | All functionality in a single HTML file</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            const popup = document.getElementById('popup');
+            const closePopup = document.querySelector('#popup .close-btn');
+            const popupTitle = document.getElementById('popup-title');
+            const popupDescription = document.getElementById('popup-description');
+            const popupType = document.getElementById('popup-type');
+            
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const resetViewBtn = document.getElementById('resetViewBtn');
+
+            const basemapimg = new Image();
+            basemapimg.src = "./basemap.png";
+
+            // Map state
+            let mapState = {
+                x: 0,
+                y: 0,
+                scale: 1,
+                isDragging: false,
+                dragStartX: 0,
+                dragStartY: 0
+            };
+
+            // Sample locations data
+            let locations = [
+                { id: 1, x: 200, y: 150, title: "Ancient Ruins", description: "Mysterious ruins dating back 2000 years with hidden chambers and ancient artifacts.", type: "Historical Site" },
+                { id: 2, x: 450, y: 300, title: "Mystic Forest", description: "Enchanted forest filled with magical creatures and glowing mushrooms.", type: "Natural Wonder" },
+                { id: 3, x: 600, y: 180, title: "Dragon's Peak", description: "Treasure-filled mountain peak where dragons once lived.", type: "Adventure Location" },
+                { id: 4, x: 300, y: 450, title: "Crystal Caves", description: "Glowing caves with rare crystals that resonate with magic.", type: "Natural Wonder" },
+                { id: 5, x: 700, y: 400, title: "Floating Islands", description: "Mysterious islands that drift through the clouds.", type: "Mystical Location" },
+                { id: 6, x: 150, y: 350, title: "Ancient Library", description: "Repository of ancient knowledge and forgotten spells.", type: "Historical Site" }
+            ];
+            
+            // Set canvas size to match container
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                drawMap();
+            }
+            
+            // Initial resize
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Draw the map
+            function drawMap() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, "#0d0d1a");
+                gradient.addColorStop(1, "#1a1a2e");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw image
+                ctx.drawImage(basemapimg, mapState.x, mapState.y, basemapimg.width * mapState.scale, basemapimg.height * mapState.scale)
+                
+                // Draw grid pattern
+                ctx.strokeStyle = "rgba(100, 100, 150, 0.1)";
+                ctx.lineWidth = 1;
+                
+                const gridSize = 50 * mapState.scale;
+                for (let x = mapState.x % gridSize; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                
+                for (let y = mapState.y % gridSize; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw locations
+                locations.forEach(location => {
+                    // Transform coordinates based on current view
+                    const screenX = (location.x * mapState.scale) + mapState.x;
+                    const screenY = (location.y * mapState.scale) + mapState.y;
+                    
+                    // Only draw if within canvas bounds
+                    if (screenX > -50 && screenX < canvas.width + 50 && 
+                        screenY > -50 && screenY < canvas.height + 50) {
+                        
+                        // Draw pin
+                        ctx.fillStyle = "#ff8a00";
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, 10 * mapState.scale, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw pin shadow
+                        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, 10 * mapState.scale, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw pin top
+                        ctx.fillStyle = "#da1b60";
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, 5 * mapState.scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+            
+            // Handle zoom
+            function zoom(factor, mouseX, mouseY) {
+                // Get current mouse position in world coordinates
+                const worldX = (mouseX - mapState.x) / mapState.scale;
+                const worldY = (mouseY - mapState.y) / mapState.scale;
+                
+                // Apply zoom
+                mapState.scale *= factor;
+                
+                // Limit zoom
+                mapState.scale = Math.max(0.2, Math.min(5, mapState.scale));
+                
+                // Adjust position to zoom towards mouse
+                mapState.x = mouseX - (worldX * mapState.scale);
+                mapState.y = mouseY - (worldY * mapState.scale);
+                
+                drawMap();
+            }
+            
+            // Event listeners
+            canvas.addEventListener('mousedown', function(e) {
+                mapState.isDragging = true;
+                mapState.dragStartX = e.clientX - mapState.x;
+                mapState.dragStartY = e.clientY - mapState.y;
+                canvas.style.cursor = 'grabbing';
+            });
+            
+            canvas.addEventListener('mousemove', function(e) {
+                if (mapState.isDragging) {
+                    mapState.x = e.clientX - mapState.dragStartX;
+                    mapState.y = e.clientY - mapState.dragStartY;
+                    drawMap();
+                }
+            });
+            
+            canvas.addEventListener('mouseup', function() {
+                mapState.isDragging = false;
+                canvas.style.cursor = 'grab';
+            });
+            
+            canvas.addEventListener('mouseleave', function() {
+                mapState.isDragging = false;
+                canvas.style.cursor = 'grab';
+            });
+            
+            // Mouse wheel zoom
+            canvas.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const zoomIntensity = 0.1;
+                const zoomFactor = e.deltaY < 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+                zoom(zoomFactor, mouseX, mouseY);
+            });
+            
+            // Button event listeners
+            zoomInBtn.addEventListener('click', function() {
+                const rect = canvas.getBoundingClientRect();
+                zoom(1.2, rect.width/2, rect.height/2);
+            });
+            
+            zoomOutBtn.addEventListener('click', function() {
+                const rect = canvas.getBoundingClientRect();
+                zoom(0.8, rect.width/2, rect.height/2);
+            });
+            
+            resetViewBtn.addEventListener('click', function() {
+                mapState.x = 0;
+                mapState.y = 0;
+                mapState.scale = 1;
+                drawMap();
+            });
+            
+            // Close popup
+            closePopup.addEventListener('click', function() {
+                popup.style.display = 'none';
+            });
+            
+            // Click on canvas to check for location hits
+            canvas.addEventListener('click', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if clicked on a location
+                for (let i = locations.length - 1; i >= 0; i--) {
+                    const location = locations[i];
+                    const screenX = (location.x * mapState.scale) + mapState.x;
+                    const screenY = (location.y * mapState.scale) + mapState.y;
+                    
+                    // Calculate distance
+                    const distance = Math.sqrt(
+                        Math.pow(x - screenX, 2) + 
+                        Math.pow(y - screenY, 2)
+                    );
+                    
+                    // If clicked within pin radius
+                    if (distance < 15 * mapState.scale) {
+                        // Show popup
+                        popupTitle.textContent = location.title;
+                        popupDescription.textContent = location.description;
+                        popupType.textContent = location.type;
+                        
+                        // Position popup
+                        popup.style.left = `${x}px`;
+                        popup.style.top = `${y}px`;
+                        popup.style.display = 'block';
+                        
+                        // Adjust popup position to be above the click
+                        const popupRect = popup.getBoundingClientRect();
+                        if (y - popupRect.height < 10) {
+                            popup.style.top = `${y + 20}px`;
+                        }
+                        
+                        return;
+                    }
+                }
+                
+                // If no location clicked, hide popup
+                popup.style.display = 'none';
+            });
+
+            // Function to load and display locations
+            async function loadLocations() {
+                const errorMessage = document.getElementById('error-message');
+                
+                try {
+                    // Fetch locations from JSON file
+                    const response = await fetch('./locations.json');
+                    
+                    // Check if response is ok
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    // Parse JSON data
+                    locations = await response.json();
+
+                    // initial draw
+                    drawMap();
+                    
+                    // Clear previous content
+                    errorMessage.innerHTML = '';
+                    
+                } catch (error) {
+                    // Handle errors
+                    errorMessage.innerHTML = `<div class="error">Error loading locations: ${error.message}</div>`;
+                    console.error('Error loading locations:', error);
+                }
+            }
+            loadLocations();
+            
+            // Initial draw not needed, will update in loadLocations
+            // drawMap();
+        });
+    </script>
+</body>
+</html>
+
